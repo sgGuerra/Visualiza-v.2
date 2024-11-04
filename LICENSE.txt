@@ -1,6 +1,6 @@
 Licencia MIT
 
-Derechos de autor (c) [visualiza] [Francisco Gomez, Luis guerra, Carlos Otalora]
+Derechos de autor (c) 2024 visualiza - Francisco Gomez, Luis guerra, Carlos Otalora
 
 Se concede permiso por la presente, sin cargo, a cualquier persona que obtenga una copia
 de este software y los archivos de documentación asociados (el "Software"), para tratar
