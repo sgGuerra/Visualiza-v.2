@@ -5,6 +5,7 @@ import whisper
 import tempfile
 import os
 import pyttsx3
+from complementos.errores import AdvertenciasFuturasError
 
 temp_file = tempfile.mkdtemp()
 save_path = os.path.join(temp_file, 'temp.wav')
@@ -34,92 +35,32 @@ class AsistenteVisualiza:
         self.engine.say(texto)
         self.engine.runAndWait()
 
-    def __str__(self) -> str:
-        return f"{self.voices}"
-
     # Función para obtener entrada de voz
-    def escuchar(self):
-        recognizer = sr.Recognizer()
-        with sr.Microphone() as source:
-            recognizer.adjust_for_ambient_noise(source)
-            print("Escuchando...")
-            audio = recognizer.listen(source)
-            try:
-                texto = recognizer.recognize_whisper(audio, language="es-ES")
-                print(f"Escuché: {texto}")
-                return texto
-            except sr.UnknownValueError:
-                print("No entendí lo que dijiste.")
-                return None
-
-
-# Clase para validar y manejar los datos del usuario
-class SolicitudDatos:
-    def __init__(self):
-        self.interaccion = AsistenteVisualiza()
-        self.datos_usuario = {}  # Diccionario para almacenar los datos del usuario
-
-    # Función para solicitar un dato ya sea por voz o manualmente
-    def solicitar_dato(self, mensaje):
-        self.interaccion.hablar(mensaje)
-        print(mensaje)
-        dato = self.interaccion.escuchar()
-        if dato is None:
-            self.interaccion.hablar("No se entendió. Por favor, ingrese los datos manualmente.")
-            dato = input("Ingrese los datos manualmente: ")
-        return dato
-
-    # Función para validar que la edad sea correcta (un número válido)
-    def validar_edad(self, edad_texto):
+    def escuchar_voz(self):
         try:
-            edad = int(edad_texto)
-            if 0 <= edad <= 120:  # Validamos que la edad esté en un rango razonable
-                return edad
-            else:
-                return None
-        except ValueError:
+            with sr.Microphone() as source:
+                print("Escuchando...")
+                self.listener.adjust_for_ambient_noise(source)
+                audio = self.listener.listen(source)
+                data = io.BytesIO(audio.get_wav_data())
+                audio_clip = AudioSegment.from_file(data)
+                audio_clip.export(save_path, format='wav')
+
+        except sr.UnknownValueError:
+            print("No entendí lo que dijiste.")
             return None
 
-    # Función principal para solicitar todos los datos del usuario
-    def solicitar_datos_usuario(self):
-        # Solicitar nombre completo
-        nombre = self.solicitar_dato("Por favor, diga su nombre completo:")
-        self.datos_usuario["Nombre"] = nombre
+        return save_path
 
-        # Solicitar la edad y validarla
-        while True:
-            edad = self.solicitar_dato("Diga su edad:")
-            edad_validada = self.validar_edad(edad)
-            if edad_validada is not None:
-                self.datos_usuario["Edad"] = edad_validada
-                break
-            else:
-                self.interaccion.hablar("Edad inválida. Por favor, inténtelo de nuevo.")
-                print("Edad inválida. Por favor, inténtelo de nuevo.")
+    # Función para reconocer y transcribir audio
+    def reconocer_audio(self, save_path):
+        try:
+            audio_model = whisper.load_model('small',)
+            transcription = audio_model.transcribe(save_path, language="spanish", fp16=False)
+            return transcription['text']
 
-        # Solicitar estado civil
-        estado_civil = self.solicitar_dato("Por favor, diga su estado civil:")
-        self.datos_usuario["Estado civil"] = estado_civil
-
-    # Función para mostrar los datos del usuario guardados
-    def mostrar_datos_guardados(self):
-        self.interaccion.hablar("Los datos ingresados son los siguientes:")
-        print("\n--- Datos del Usuario ---")
-        for clave, valor in self.datos_usuario.items():
-            print(f"{clave}: {valor}")
-            self.interaccion.hablar(f"{clave}: {valor}")
-
-
-# Clase principal que ejecuta el programa
-class ProgramaPrincipal:
-    def __init__(self):
-        self.solicitud_datos = SolicitudDatos()
-
-    def ejecutar(self):
-        self.solicitud_datos.solicitar_datos_usuario()
-        self.solicitud_datos.mostrar_datos_guardados()
-
-
-# Ejecutar el programa
-if __name__ == "__main__":
-    AsistenteVisualiza()
+        except FutureWarning:
+            raise AdvertenciasFuturasError("El parámetro 'weights_only' no es válido para esta versión de Whisper. "
+                                           "Usando el modelo por defecto.")
+        except Exception as e:
+            raise e
