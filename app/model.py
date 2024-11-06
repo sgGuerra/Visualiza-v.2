@@ -5,7 +5,7 @@ import whisper
 import tempfile
 import os
 import pyttsx3
-from complementos.errores import AdvertenciasFuturasError
+import warnings
 
 temp_file = tempfile.mkdtemp()
 save_path = os.path.join(temp_file, 'temp.wav')
@@ -20,6 +20,7 @@ class AsistenteVisualiza:
         self.voz_asistente = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Speech\\Voices\\Tokens\\TTS_MS_ES-ES_HELENA_11.0'
         self.cambiar_voz(self.voz_asistente)
         self.velocidad_voz(160)
+
 
     def cambiar_voz(self, voice_id):
         for voice in self.voices:
@@ -54,13 +55,28 @@ class AsistenteVisualiza:
 
     # Función para reconocer y transcribir audio
     def reconocer_audio(self, save_path):
-        try:
-            audio_model = whisper.load_model('small',)
-            transcription = audio_model.transcribe(save_path, language="spanish", fp16=False)
-            return transcription['text']
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", FutureWarning)
+            try:
+                audio_model = whisper.load_model('small', )
+                transcription = audio_model.transcribe(save_path, language="spanish", fp16=False)
+                return transcription['text']
 
-        except FutureWarning:
-            raise AdvertenciasFuturasError("El parámetro 'weights_only' no es válido para esta versión de Whisper. "
-                                           "Usando el modelo por defecto.")
-        except Exception as e:
-            raise e
+            except Exception as e:
+                print(f"Ocurrió un error al reconocer el audio: {e}")
+                return None
+
+    # Nueva función para obtener la respuesta del usuario
+    def obtener_respuesta(self):
+        ruta_audio = self.escuchar_voz()
+        if ruta_audio:
+            texto = self.reconocer_audio(ruta_audio)
+            if texto:
+                print(f"Usuario dijo: {texto}")
+                return texto
+            else:
+                self.hablar("No pude entender tu respuesta. Por favor, intenta de nuevo.")
+                return self.obtener_respuesta()
+        else:
+            self.hablar("No recibí ninguna respuesta. Por favor, intenta de nuevo.")
+            return self.obtener_respuesta()
