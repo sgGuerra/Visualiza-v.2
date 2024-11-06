@@ -3,7 +3,7 @@ from app.datos_usuario import SolicitudDatos
 from app.persona import Persona
 from app.reconocer_objetos import DetectorObjetos
 from complementos.errores import RespuestaInvalidaError
-
+from interfaz import InterfazVisualiza
 
 class ProgramaPrincipal:
     def __init__(self):
@@ -52,7 +52,8 @@ class ProgramaPrincipal:
                 self.asistente.hablar("Gracias por usar Visualiza. ¡Hasta pronto!")
                 exit()
 
-# Ejecutar el programa
+
+
 if __name__ == "__main__":
-    programa = ProgramaPrincipal()
-    programa.ejecutar_programa()
+    app = InterfazVisualiza()
+    app.iniciar()
