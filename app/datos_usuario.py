@@ -69,20 +69,19 @@ class SolicitudDatos:
 
     # Función para validar que la edad sea correcta (un número válido)
     def validar_edad(self, edad):
-        return edad
-        """if 0 < edad < 120:
+        if 0 < edad < 120:
             return edad
         else:
-            raise EdadInvalidaError(edad, "La entrada no es un número válido.")"""
+            raise EdadInvalidaError(edad, "La entrada no es un número válido.")
 
     # Función principal para solicitar todos los datos del usuario
     def solicitar_datos_usuario(self):
         # Solicitar nombre completo
-        #nombre = self.solicitar_dato("Por favor, dime como quieres que te llame:")
-        #self.datos_usuario["Nombre"] = nombre
+        nombre = self.solicitar_dato("Por favor, dime como quieres que te llame:")
+        self.datos_usuario["Nombre"] = nombre
 
-        #genero = self.solicitar_dato("ahora dime cual es tu genero: ")
-        #self.datos_usuario["Genero"] = genero
+        genero = self.solicitar_dato("ahora dime cual es tu genero: ")
+        self.datos_usuario["Genero"] = genero
 
         # Solicitar edad
         while True:
@@ -110,8 +109,8 @@ class SolicitudDatos:
                     self.interaccion.hablar("Por favor, ingrese un número válido.")
 
         # Solicitar estado civil
-        #estado_civil = self.solicitar_dato("Por favor, diga su estado civil:")
-        #self.datos_usuario["Estado civil"] = estado_civil
+        estado_civil = self.solicitar_dato("Por favor, diga su estado civil:")
+        self.datos_usuario["Estado civil"] = estado_civil
 
     # Función para mostrar los datos del usuario guardados
     def mostrar_datos_guardados(self):
