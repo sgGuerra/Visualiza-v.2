@@ -1,26 +1,24 @@
-from app.model import AsistenteVisualiza
-from app.datos_usuario import SolicitudDatos
-from app.reconocer_objetos import DetectorObjetos
-from app.persona import Persona
-from complementos.errores import RespuestaInvalidaError
-from interfaz import InterfazVisualiza
+from src.controllers.asistente_controller import AsistenteController
+from src.controllers.datos_controller import DatosUsuarioController
+from src.controllers.detector_controller import DetectorController
+from src.utils.errores import RespuestaInvalidaError
 
-class ProgramaPrincipal:
+class InterfazView:
     def __init__(self):
-        self.solicitud = SolicitudDatos()
-        self.detector = DetectorObjetos()
-        self.asistente = AsistenteVisualiza()
+        self.asistente = AsistenteController()
+        self.datos_controller = DatosUsuarioController()
+        self.detector = DetectorController()
 
-    def ejecutar_programa(self, ):
+    def mostrar_bienvenida(self):
         self.asistente.hablar("Bienvenido me llamo Visualiza.")
         self.asistente.hablar("Vamos a registrar tus datos para comenzar.")
 
+    def solicitar_confirmacion_datos(self):
         datos_validos = False
         while not datos_validos:
-            self.solicitud.solicitar_datos_usuario()
-            self.solicitud.mostrar_datos_guardados()
+            self.datos_controller.solicitar_datos_usuario()
+            self.datos_controller.mostrar_datos_guardados()
 
-            # Preguntar al usuario si los datos son correctos
             self.asistente.hablar("¿Los datos son correctos? Por favor responde con 'correctos' o 'incorrectos'.")
             respuesta = self.asistente.obtener_respuesta().strip().lower()
 
@@ -29,8 +27,9 @@ class ProgramaPrincipal:
             elif "incorrectos" in respuesta:
                 self.asistente.hablar("Vamos a reingresar tus datos.")
 
+    def solicitar_inicio_deteccion(self):
         try:
-            self.asistente.hablar("¿Deseas iniciar la detección de objetos? Responde uno para 'sí' o dos para'no'.")
+            self.asistente.hablar("¿Deseas iniciar la detección de objetos? Responde 'uno' para sí o 'dos' para no.")
             respuesta = self.asistente.obtener_respuesta().strip().lower()
 
             if respuesta not in ["uno", "dos"]:
@@ -52,8 +51,7 @@ class ProgramaPrincipal:
                 self.asistente.hablar("Gracias por usar Visualiza. ¡Hasta pronto!")
                 exit()
 
-
-
-if __name__ == "__main__":
-    app = InterfazVisualiza()
-    app.iniciar()
+    def iniciar(self):
+        self.mostrar_bienvenida()
+        self.solicitar_confirmacion_datos()
+        self.solicitar_inicio_deteccion()
