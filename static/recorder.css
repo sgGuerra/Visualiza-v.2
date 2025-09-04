@@ -1,17 +1,104 @@
+:root {
+    --bg-gradient-light: linear-gradient(135deg, #e0f7fa 0%, #f1f8e9 100%);
+    --bg-gradient-dark: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    --container-bg-light: rgba(255, 255, 255, 0.9);
+    --container-bg-dark: rgba(30, 30, 30, 0.9);
+    --text-color-light: #424242;
+    --text-color-dark: #e0e0e0;
+    --h1-color-light: #1976d2;
+    --h1-color-dark: #64b5f6;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background: var(--bg-gradient-light);
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    transition: background 0.3s ease;
+}
+
+body.dark-theme {
+    background: var(--bg-gradient-dark);
+}
+
+.navbar {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+    transition: background 0.3s ease;
+}
+
+body.dark-theme .navbar {
+    background-color: #333 !important;
+}
+
+body.dark-theme .navbar .navbar-brand,
+body.dark-theme .navbar .nav-link {
+    color: #e0e0e0 !important;
+}
+
+.theme-toggle-btn {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 10;
+}
+
+.response-container {
+    position: fixed;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    max-width: 600px;
+    background: var(--container-bg-light);
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    padding: 20px;
+    transition: background 0.3s ease;
+}
+
+body.dark-theme .response-container {
+    background: var(--container-bg-dark);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.record-container {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+}
+
 .btn-record {
     border: none;
     padding: 25px;
     border-radius: 50%;
     width: 100px;
     height: 100px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.btn-record:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
 .btn-record-green {
-    background-color: #19ceae;
+    background-color: #4caf50;
 }
 
 .btn-record-red {
-    background-color: #dc3545;
+    background-color: #f44336;
 }
 
 .btn-record img {
@@ -23,9 +110,36 @@
 .record-spinner {
     color: white;
     width: 30px;
-    height: 30px
+    height: 30px;
 }
 
 .mic-img {
     width: 30px;
+}
+
+h1 {
+    text-align: center;
+    color: var(--h1-color-light);
+    margin-bottom: 30px;
+    margin-top: 40px;
+    font-weight: 600;
+    padding-top: 20px;
+}
+
+body.dark-theme h1 {
+    color: var(--h1-color-dark);
+}
+
+.response-text {
+    font-size: 18px;
+    color: var(--text-color-light);
+    font-weight: 400;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+body.dark-theme .response-text {
+    color: var(--text-color-dark);
 }

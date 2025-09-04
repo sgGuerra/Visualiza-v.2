@@ -10,12 +10,19 @@ class Weather():
     def get(self, city):
         response = requests.get(f"http://api.weatherapi.com/v1/current.json?key={self.key}&q={city}&aqi=no")
         if response.status_code == 200:
-            print("Todo bien! Respuesta:")
-            print(response.json())
-            result = {}
-            result["temperatura"] = str(response.json()["current"]["temp_c"]) + " grados celsius"
-            result["condicion"] = response.json()["current"]["condition"]["text"]
+            data = response.json()
+            result = {
+                "ciudad": city,
+                "temperatura": data["current"]["temp_c"],
+                "condicion": data["current"]["condition"]["text"],
+                "humedad": data["current"]["humidity"],
+                "sensacion_termica": data["current"]["feelslike_c"]
+            }
+            print("Datos del clima obtenidos:", result)
             return result
-            #return response.json()
         else:
-            print(f"Oops, algo salió mal al llamar al API del clima. Codigo fue: {response.status_code}")
+            print(f"Error al llamar al API del clima. Código: {response.status_code}")
+            return {
+                "error": "No se pudo obtener el clima",
+                "ciudad": city
+            }

@@ -1,95 +1,103 @@
-import openai
+from openai import OpenAI
 import json
+import os
+from dotenv import load_dotenv
 
-#Clase para utilizar cualquier LLM para procesar un texto
-#Y regresar una funcion a llamar con sus parametros
-#Uso el modelo 0613, pero puedes usar un poco de
-#prompt engineering si quieres usar otro modelo
+# Cargar variables de entorno
+load_dotenv()
+
 class LLM():
     def __init__(self):
-        pass
+        # Configuración de Novita AI
+        self.base_url = "https://api.novita.ai/openai"
+        self.api_key = os.getenv('NOVITA_API_KEY')
+        # Puedes cambiar el modelo según tus necesidades:
+        # - meta-llama/llama-3.1-8b-instruct
+        # - openchat/openchat-3.5-1210
+        # - codellama/codellama-34b-instruct
+        # - anthropic/claude-2.1
+        self.model = "meta-llama/llama-3.1-8b-instruct"
+        
+        # Inicializar cliente
+        self.client = OpenAI(
+            base_url=self.base_url,
+            api_key=self.api_key,
+        )
     
     def process_functions(self, text):
+        # Lista de funciones disponibles para el prompt
+        functions_description = """
+        Funciones disponibles:
+        1. get_weather(ubicacion: string) - Obtener el clima actual de una ciudad
+           - Se debe usar cuando el usuario pregunte sobre el clima, temperatura o condiciones meteorológicas
+           - Ejemplos de preguntas que activan esta función:
+             * "¿Cómo está el clima en [ciudad]?"
+             * "¿Qué temperatura hace en [ciudad]?"
+             * "Clima en [ciudad]"
+             * "¿Está lloviendo en [ciudad]?"
+             * "¿Qué tiempo hace en [ciudad]?"
+           - Responder con: {"function": "get_weather", "args": {"ubicacion": "nombre_ciudad"}}
+
+        2. send_email(recipient: string, subject: string, body: string) - Enviar un correo
+        3. open_chrome(website: string) - Abrir un navegador web en un sitio específico
+
+        IMPORTANTE: Cualquier pregunta sobre clima, temperatura o condiciones meteorológicas DEBE usar la función get_weather.
+        Responde SIEMPRE con un JSON en este formato exacto:
+        {"function": "nombre_funcion", "args": {"argumento1": "valor1"}}
+
+        Para el clima, extrae la ciudad mencionada y úsala como ubicación.
+        Si no está relacionado con ninguna función, responde normalmente.
+        """
         
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo-0613",
+        # Primero, analicemos si es una consulta de clima
+        is_weather_query = any(keyword in text.lower() for keyword in [
+            "clima", "temperatura", "tiempo hace", "lluvia", "lloviendo",
+            "calor", "frío", "como esta el", "que tal esta"
+        ])
+
+        system_prompt = """Eres un asistente personal diseñado para apoyar de forma empática, clara y eficiente a una persona ciega en sus actividades diarias. Tu objetivo es facilitar la autonomía, brindar información útil y orientar con precisión, utilizando únicamente referencias que sean accesibles a través del tacto, el sonido, el olfato, la memoria, la ubicación espacial y el contexto funcional.
+
+Todas tus respuestas deben ser prácticas, descriptivas desde una perspectiva no visual y adaptadas a la experiencia sensorial de una persona ciega. Evita por completo mencionar colores, apariencias visuales, expresiones faciales o cualquier detalle que dependa de la vista.
+
+Prioriza:
+- Orientación espacial clara usando referencias táctiles y sonoras
+- Descripciones funcionales de objetos
+- Instrucciones paso a paso
+- Identificación de sonidos ambientales relevantes
+- Apoyo emocional con tono respetuoso y empático
+"""
+
+        # Si es una consulta de clima, añadimos instrucciones específicas
+        if is_weather_query:
+            system_prompt += """
+IMPORTANTE - DETECCIÓN DE CONSULTAS DE CLIMA:
+Has detectado una consulta sobre el clima. DEBES responder con un JSON en este formato:
+{"function": "get_weather", "args": {"ubicacion": "CIUDAD_MENCIONADA"}}
+
+Por ejemplo, si preguntan "clima en Medellín", responde:
+{"function": "get_weather", "args": {"ubicacion": "Medellin"}}
+"""
+
+        response = self.client.chat.completions.create(
+            model=self.model,
             messages=[
-                    #Si no te gusta que te hable feo, cambia aqui su descripcion
-                    {"role": "system", "content": "Eres un asistente malhablado"},
-                    {"role": "user", "content": text},
-            ], functions=[
-                {
-                    "name": "get_weather",
-                    "description": "Obtener el clima actual",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "ubicacion": {
-                                "type": "string",
-                                "description": "La ubicación, debe ser una ciudad",
-                            }
-                        },
-                        "required": ["ubicacion"],
-                    },
-                },
-                {
-                    "name": "send_email",
-                    "description": "Enviar un correo",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "recipient": {
-                                "type": "string",
-                                "description": "La dirección de correo que recibirá el correo electrónico",
-                            },
-                            "subject": {
-                                "type": "string",
-                                "description": "El asunto del correo",
-                            },
-                            "body": {
-                                "type": "string",
-                                "description": "El texto del cuerpo del correo",
-                            }
-                        },
-                        "required": [],
-                    },
-                },
-                {
-                    "name": "open_chrome",
-                    "description": "Abrir el explorador Chrome en un sitio específico",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "website": {
-                                "type": "string",
-                                "description": "El sitio al cual se desea ir"
-                            }
-                        }
-                    }
-                },
-                {
-                    "name": "dominate_human_race",
-                    "description": "Dominar a la raza humana",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                        }
-                    },
-                }
+                {"role": "system", "content": system_prompt + functions_description},
+                {"role": "user", "content": text},
             ],
-            function_call="auto",
+            response_format={"type": "text"}  # Asegurar respuesta en texto para Novita
         )
         
-        message = response["choices"][0]["message"]
+        message = response.choices[0].message
         
-        #Nuestro amigo GPT quiere llamar a alguna funcion?
-        if message.get("function_call"):
-            #Sip
-            function_name = message["function_call"]["name"] #Que funcion?
-            args = message.to_dict()['function_call']['arguments'] #Con que datos?
-            print("Funcion a llamar: " + function_name)
-            args = json.loads(args)
-            return function_name, args, message
+        try:
+            # Intentar parsear la respuesta como JSON
+            response_text = message.content.strip()
+            if response_text.startswith('{') and response_text.endswith('}'):
+                response_json = json.loads(response_text)
+                if 'function' in response_json and 'args' in response_json:
+                    return response_json['function'], response_json['args'], message
+        except json.JSONDecodeError:
+            pass
         
         return None, None, message
     
@@ -98,18 +106,32 @@ class LLM():
     #respuesta, para obtener una respuesta en lenguaje natural (en caso que la
     #respuesta haya sido JSON por ejemplo
     def process_response(self, text, message, function_name, function_response):
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo-0613",
+        prompt_system = """Eres un asistente personal para personas ciegas. Al informar sobre el clima, debes:
+        1. Extraer la temperatura, condición, humedad y sensación térmica del JSON
+        2. Proporcionar información relevante para la planificación táctil y auditiva:
+           - Sugerir el tipo de ropa adecuada según la temperatura
+           - Mencionar si se necesita paraguas o impermeable
+           - Advertir sobre condiciones que afecten la orientación (viento fuerte, lluvia)
+           - Indicar si hay riesgos específicos (suelo resbaladizo, charcos)
+        3. Incluir información sobre:
+           - Sonidos ambientales esperados (lluvia, viento, truenos)
+           - Sensaciones térmicas y de humedad relevantes
+        4. Dar recomendaciones prácticas para la movilidad y protección
+        
+        Ejemplo de respuesta:
+        "En [ciudad] la temperatura es de [temperatura]°C, se siente como [sensacion_termica]°C. Hay [condicion], así que escucharás [sonidos_relevantes]. Te recomiendo llevar [tipo_ropa] y [equipamiento_necesario]. Ten en cuenta que [advertencias_movilidad]."
+        """
+        
+        response = self.client.chat.completions.create(
+            model=self.model,
             messages=[
-                #Aqui tambien puedes cambiar como se comporta
-                {"role": "system", "content": "Eres un asistente malhablado"},
+                {"role": "system", "content": prompt_system},
                 {"role": "user", "content": text},
-                message,
-                {
-                    "role": "function",
-                    "name": function_name,
-                    "content": function_response,
-                },
+                {"role": "assistant", "content": message.content},
+                {"role": "system", "content": "El servicio del clima retornó este JSON:"},
+                {"role": "system", "content": function_response},
+                {"role": "system", "content": "Genera una respuesta natural incluyendo la información del clima."}
             ],
+            response_format={"type": "text"}  # Asegurar respuesta en texto para Novita
         )
-        return response["choices"][0]["message"]["content"]
+        return response.choices[0].message.content

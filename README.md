@@ -1,39 +1,56 @@
 
 # Asistente virtual
-Este repositorio es el código para el video del Asistente Virtual en el canal Ringa Tech:
-https://youtu.be/-0tIy8wWtzE
 
 ## Configuración
 Para ejecutar el proyecto es necesario:
-- Descargar el repositorio
-- Opcional: Crea un ambiente virtual
-- Instala las dependencias ejecutando 
-	- ```  pip install -r requirements.txt ```
-- Crea un archivo llamado ```.env```
-	- En el archivo coloca las llaves. Para el proyecto tal cual del video (y este repositorio) estoy utilizando:
-	- ```OPENAI_API_KEY=XXXXXX```
-	- ```ELEVENLABS_API_KEY=XXXXXX```
-	- ```WEATHER_API_KEY=XXXXXX```
+1. Descargar el repositorio
 
-## Ajustes
-El proyecto cuenta con algunas cosas que quizá quieras modificar, por ejemplo:
+2. Configurar el entorno Python:
+   - Recomendado: Crear un ambiente virtual:
+     ```bash
+     python -m venv .venv
+     .venv\Scripts\activate  # En Windows
+     source .venv/bin/activate  # En Linux/Mac
+     ```
 
-- En la clase LLM puedes modificar para que el asistente no sea "malhablado". Se utiliza en 2 lugares del archivo.
-- En la clase PcCommand, abre Chrome buscándolo en una ruta fija para Windows. Puedes modificarlo para que busque el ejecutable en Mac / Linux.
+3. Instalar herramientas base (importante para evitar errores):
+   ```bash
+   python -m pip install --upgrade pip
+   pip install wheel setuptools
+   ```
+
+4. Instalar las dependencias:
+   ```bash
+   pip install -r requirements.txt
+   ```
+   
+   Si encuentras errores con paquetes como `frozenlist`, `multidict`, `yarl` o `aiohttp`, instálalos individualmente:
+   ```bash
+   pip install frozenlist multidict yarl aiohttp
+   ```
+   
+5. Crear un archivo `.env` con las siguientes claves:
+   ```
+   NOVITA_API_KEY=XXXXXX      # API key de Novita AI
+   ELEVENLABS_API_KEY=XXXXXX  # API key de ElevenLabs para TTS
+   WEATHER_API_KEY=XXXXXX     # API key para el servicio del clima
+   ```
+
+### Requisitos del Sistema
+- Python 3.8 o superior
+- En Windows: 
+  - Visual C++ 14.0 o superior (necesario para algunas dependencias)
+  - Puedes instalarlo con "Build Tools for Visual Studio"
+
 
 ## Ejecución
 - Este proyecto utiliza Flask. Puedes levantar el servidor en modo debug por defecto en el puerto 5000 con el comando
 	- ```flask --app app run --debug```
 	- En tu navegador ve a http://localhost:5000
 	- Da clic para comenzar a grabar (pedirá permiso). Dar clic para dejar de grabar
-	- Espera y ve como domina al mundo
 
-
-## ¿Problemas?
-
-Solo lo probé en mi equipo así que si tienes problemas, levanta un issue aquí en Github, con el mayor detalle que puedas (versión de python, de paquetes, mensaje completo de error, etc).
-
-Si eres ninja y lo solucionas, ¡levanta un Pull Request!
 
 ## Licencias
 - Imagen de micrófono por Freepik
+- Parte del código Este repositorio es el código para el video del Asistente Virtual en el canal Ringa Tech:
+https://youtu.be/-0tIy8wWtzE

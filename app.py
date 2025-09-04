@@ -1,5 +1,4 @@
 import os
-import openai
 from dotenv import load_dotenv
 from flask import Flask, render_template, request
 import json
@@ -11,7 +10,6 @@ from pc_command import PcCommand
 
 #Cargar llaves del archivo .env
 load_dotenv()
-openai.api_key = os.getenv('OPENAI_API_KEY')
 elevenlabs_key = os.getenv('ELEVENLABS_API_KEY')
 
 app = Flask(__name__)
@@ -22,11 +20,18 @@ def index():
 
 @app.route("/audio", methods=["POST"])
 def audio():
-    #Obtener audio grabado y transcribirlo
-    audio = request.files.get("audio")
-    text = Transcriber().transcribe(audio)
+    print("\n=== Nueva solicitud de audio recibida ===")
     
-    #Utilizar el LLM para ver si llamar una funcion
+    # Obtener audio grabado y transcribirlo
+    audio = request.files.get("audio")
+    print("Audio recibido, iniciando transcripción...")
+    
+    text = Transcriber().transcribe(audio)
+    print("\n=== Transcripción completada ===")
+    print(f"Texto a procesar: '{text}'")
+    
+    # Utilizar el LLM para ver si llamar una funcion
+    print("\nProcesando texto con el modelo de lenguaje...")
     llm = LLM()
     function_name, args, message = llm.process_functions(text)
     if function_name is not None:
@@ -43,7 +48,7 @@ def audio():
         
         elif function_name == "send_email":
             #Llamar a la funcion para enviar un correo
-            final_response = "Tu que estas leyendo el codigo, implementame y envia correos muahaha"
+            final_response = "Esta función aún no está implementada."
             tts_file = TTS().process(final_response)
             return {"result": "ok", "text": final_response, "file": tts_file}
         
@@ -58,6 +63,6 @@ def audio():
             tts_file = TTS().process(final_response)
             return {"result": "ok", "text": final_response, "file": tts_file}
     else:
-        final_response = "No tengo idea de lo que estás hablando, Ringa Tech"
+        final_response = "Disculpa, no he entendido bien tu solicitud. ¿Podrías repetirla de forma más clara y pausada? Estoy aquí para ayudarte con información del clima, enviar correos, abrir sitios web o asistirte en otras tareas."
         tts_file = TTS().process(final_response)
         return {"result": "ok", "text": final_response, "file": tts_file}
