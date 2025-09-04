@@ -39,9 +39,11 @@ class LLM():
            - Responder con: {"function": "get_weather", "args": {"ubicacion": "nombre_ciudad"}}
 
         2. send_email(recipient: string, subject: string, body: string) - Enviar un correo
-        3. open_chrome(website: string) - Abrir un navegador web en un sitio específico
+        3. open_browser(website: string) - Abrir un navegador web en un sitio específico
+        4. play_on_youtube(song: string) - Reproducir una canción en YouTube
 
         IMPORTANTE: Cualquier pregunta sobre clima, temperatura o condiciones meteorológicas DEBE usar la función get_weather.
+        Para reproducir música en YouTube, usa la función play_on_youtube con el nombre de la canción.
         Responde SIEMPRE con un JSON en este formato exacto:
         {"function": "nombre_funcion", "args": {"argumento1": "valor1"}}
 
@@ -54,6 +56,10 @@ class LLM():
             "clima", "temperatura", "tiempo hace", "lluvia", "lloviendo",
             "calor", "frío", "como esta el", "que tal esta"
         ])
+
+        # Analizar si es una solicitud para reproducir música en YouTube
+        music_keywords = ["reproduce en youtube", "reproducir en youtube", "pon musica en youtube", "pon música en youtube"]
+        is_music_query = any(keyword in text.lower() for keyword in music_keywords)
 
         system_prompt = """Eres un asistente personal diseñado para apoyar de forma empática, clara y eficiente a una persona ciega en sus actividades diarias. Tu objetivo es facilitar la autonomía, brindar información útil y orientar con precisión, utilizando únicamente referencias que sean accesibles a través del tacto, el sonido, el olfato, la memoria, la ubicación espacial y el contexto funcional.
 
@@ -76,6 +82,17 @@ Has detectado una consulta sobre el clima. DEBES responder con un JSON en este f
 
 Por ejemplo, si preguntan "clima en Medellín", responde:
 {"function": "get_weather", "args": {"ubicacion": "Medellin"}}
+"""
+
+        # Si es una consulta para reproducir música en YouTube, añadimos instrucciones específicas
+        if is_music_query:
+            system_prompt += """
+IMPORTANTE - DETECCIÓN DE CONSULTAS DE MÚSICA EN YOUTUBE:
+Has detectado una consulta para reproducir música en YouTube. DEBES responder con un JSON en este formato:
+{"function": "play_on_youtube", "args": {"song": "NOMBRE_DE_LA_CANCION"}}
+
+Por ejemplo, si preguntan "reproduce en youtube Despacito", responde:
+{"function": "play_on_youtube", "args": {"song": "Despacito"}}
 """
 
         response = self.client.chat.completions.create(
@@ -106,32 +123,81 @@ Por ejemplo, si preguntan "clima en Medellín", responde:
     #respuesta, para obtener una respuesta en lenguaje natural (en caso que la
     #respuesta haya sido JSON por ejemplo
     def process_response(self, text, message, function_name, function_response):
-        prompt_system = """Eres un asistente personal para personas ciegas. Al informar sobre el clima, debes:
-        1. Extraer la temperatura, condición, humedad y sensación térmica del JSON
-        2. Proporcionar información relevante para la planificación táctil y auditiva:
-           - Sugerir el tipo de ropa adecuada según la temperatura
-           - Mencionar si se necesita paraguas o impermeable
-           - Advertir sobre condiciones que afecten la orientación (viento fuerte, lluvia)
-           - Indicar si hay riesgos específicos (suelo resbaladizo, charcos)
-        3. Incluir información sobre:
-           - Sonidos ambientales esperados (lluvia, viento, truenos)
-           - Sensaciones térmicas y de humedad relevantes
-        4. Dar recomendaciones prácticas para la movilidad y protección
-        
-        Ejemplo de respuesta:
-        "En [ciudad] la temperatura es de [temperatura]°C, se siente como [sensacion_termica]°C. Hay [condicion], así que escucharás [sonidos_relevantes]. Te recomiendo llevar [tipo_ropa] y [equipamiento_necesario]. Ten en cuenta que [advertencias_movilidad]."
-        """
-        
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=[
-                {"role": "system", "content": prompt_system},
-                {"role": "user", "content": text},
-                {"role": "assistant", "content": message.content},
-                {"role": "system", "content": "El servicio del clima retornó este JSON:"},
-                {"role": "system", "content": function_response},
-                {"role": "system", "content": "Genera una respuesta natural incluyendo la información del clima."}
-            ],
-            response_format={"type": "text"}  # Asegurar respuesta en texto para Novita
-        )
-        return response.choices[0].message.content
+        if function_name == "open_browser":
+            # Para abrir navegador, generar respuesta confirmando la acción
+            website = function_response.get('website', 'la página')
+            prompt_system = f"""Eres un asistente personal. El usuario pidió abrir una página web. Genera una respuesta natural y confirmatoria que incluya:
+            1. Confirmar que se abrió la página
+            2. Mencionar el nombre de la página o sitio
+            3. Si hay instrucciones adicionales (como reproducir música), incluirlas en la confirmación
+            4. Mantener un tono amigable y útil
+
+            Ejemplo: Si el usuario dice "abre youtube y reproduce y siempre de karolina", responde algo como "Listo, ya abrí YouTube y comenzaré a reproducir 'Y siempre de Karolina' para que suene la canción."
+
+            La página a abrir es: {website}
+            """
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": prompt_system},
+                    {"role": "user", "content": text},
+                    {"role": "assistant", "content": message.content},
+                    {"role": "system", "content": "Genera una respuesta natural confirmando la apertura de la página."}
+                ],
+                response_format={"type": "text"}
+            )
+            return response.choices[0].message.content
+        elif function_name == "play_on_youtube":
+            # Para reproducir música en YouTube, generar respuesta confirmando la acción
+            song = function_response.get('song', 'la canción')
+            prompt_system = f"""Eres un asistente personal. El usuario pidió reproducir una canción en YouTube. Genera una respuesta natural y confirmatoria que incluya:
+            1. Confirmar que se está reproduciendo la canción
+            2. Mencionar el nombre de la canción
+            3. Mantener un tono amigable y útil
+
+            Ejemplo: Si el usuario dice "reproduce en youtube Despacito", responde algo como "Listo, ya estoy reproduciendo 'Despacito' en YouTube para que suene la canción."
+
+            La canción a reproducir es: {song}
+            """
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": prompt_system},
+                    {"role": "user", "content": text},
+                    {"role": "assistant", "content": message.content},
+                    {"role": "system", "content": "Genera una respuesta natural confirmando la reproducción de la canción."}
+                ],
+                response_format={"type": "text"}
+            )
+            return response.choices[0].message.content
+        else:
+            # Para otras funciones como clima
+            prompt_system = """Eres un asistente personal para personas ciegas. Al informar sobre el clima, debes:
+            1. Extraer la temperatura, condición, humedad y sensación térmica del JSON
+            2. Proporcionar información relevante para la planificación táctil y auditiva:
+               - Sugerir el tipo de ropa adecuada según la temperatura
+               - Mencionar si se necesita paraguas o impermeable
+               - Advertir sobre condiciones que afecten la orientación (viento fuerte, lluvia)
+               - Indicar si hay riesgos específicos (suelo resbaladizo, charcos)
+            3. Incluir información sobre:
+               - Sonidos ambientales esperados (lluvia, viento, truenos)
+               - Sensaciones térmicas y de humedad relevantes
+            4. Dar recomendaciones prácticas para la movilidad y protección
+
+            Ejemplo de respuesta:
+            "En [ciudad] la temperatura es de [temperatura]°C, se siente como [sensacion_termica]°C. Hay [condicion], así que escucharás [sonidos_relevantes]. Te recomiendo llevar [tipo_ropa] y [equipamiento_necesario]. Ten en cuenta que [advertencias_movilidad]."
+            """
+
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": prompt_system},
+                    {"role": "user", "content": text},
+                    {"role": "assistant", "content": message.content},
+                    {"role": "system", "content": "El servicio del clima retornó este JSON:"},
+                    {"role": "system", "content": function_response},
+                    {"role": "system", "content": "Genera una respuesta natural incluyendo la información del clima."}
+                ],
+                response_format={"type": "text"}  # Asegurar respuesta en texto para Novita
+            )
+            return response.choices[0].message.content

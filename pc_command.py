@@ -3,6 +3,7 @@ import json
 from subprocess import Popen
 import winreg
 import urllib.parse
+import pywhatkit
 
 class PcCommand():
     def __init__(self):
@@ -96,30 +97,42 @@ class PcCommand():
             
         return website
 
-    def open_chrome(self, website):
-        """Abrir una URL en el navegador disponible"""
+    def open_browser(self, website):
+        """Abrir una URL específica en el navegador disponible"""
         try:
             # Intentar usar el navegador cacheado primero
             browser = self.cached_browser
-            
+
             # Si no hay navegador cacheado, buscar uno
             if not browser:
                 print("Buscando navegador instalado...")
                 browser = self._find_browser()
                 if browser:
                     self._save_browser_cache(browser)
-                    
+
             if not browser:
                 raise Exception("No se encontró ningún navegador instalado")
-            
+
             # Procesar la URL
             processed_url = self._process_url(website)
             print(f"Abriendo {processed_url} en {browser['name']}...")
-            
+
             # Abrir el navegador con la URL
             Popen([browser['path'], processed_url])
             return True
-            
+
         except Exception as e:
             print(f"Error al abrir el navegador: {e}")
+            return False
+
+    def play_on_youtube(self, song):
+        """Reproducir una canción específica en YouTube"""
+        try:
+            if not song or song.strip() == "":
+                song = "music"
+            print(f"Reproduciendo en YouTube: {song}")
+            pywhatkit.playonyt(song.strip())
+            return True
+        except Exception as e:
+            print(f"Error al reproducir música en YouTube: {e}")
             return False

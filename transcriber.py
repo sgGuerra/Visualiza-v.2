@@ -1,26 +1,41 @@
 import whisper
 import os
+import warnings
+from pydub import AudioSegment
 
 class Transcriber:
     def __init__(self):
         # Cargar el modelo de Whisper (se descargará la primera vez)
         print("Cargando modelo de Whisper...")
-        self.model = whisper.load_model("medium")
+        # Suprimir la advertencia de FP16 y forzar FP32 para CPU
+        warnings.filterwarnings("ignore", message="FP16 is not supported on CPU; using FP32 instead")
+        self.model = whisper.load_model("medium", device="cpu")
         print("Modelo de Whisper cargado!")
         
-    # Siempre guarda y lee del archivo audio.mp3
     def transcribe(self, audio):
         try:
             print("\n=== Iniciando transcripción con Whisper ===")
-            
-            # Guardar el audio
-            audio.save("audio.mp3")
-            print("Audio guardado temporalmente como audio.mp3")
-            
+
+            # Guardar el audio temporalmente
+            temp_path = "temp_audio"
+            audio.save(temp_path)
+            print("Audio guardado temporalmente")
+
+            # Cargar y convertir a 16kHz mono WAV
+            print("Convirtiendo audio a 16kHz mono WAV...")
+            sound = AudioSegment.from_file(temp_path)
+            sound = sound.set_channels(1).set_frame_rate(16000)
+            sound.export("audio.wav", format="wav")
+            print("Audio convertido y guardado como audio.wav")
+
+            # Eliminar archivo temporal
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+
             # Realizar la transcripción
             print("Transcribiendo audio...")
-            result = self.model.transcribe("audio.mp3")
-            
+            result = self.model.transcribe("audio.wav")
+
             # Mostrar detalles de la transcripción
             text = result["text"].strip()
             print("\nResultado de la transcripción:")
@@ -34,17 +49,19 @@ class Transcriber:
                     if 'confidence' in segment:
                         print(f"  Confianza: {segment['confidence']:.2%}")
             print("-------------------------------")
-            
-            # Eliminar el archivo temporal
-            if os.path.exists("audio.mp3"):
-                os.remove("audio.mp3")
+
+            # Eliminar el archivo WAV temporal
+            if os.path.exists("audio.wav"):
+                os.remove("audio.wav")
                 print("Archivo de audio temporal eliminado")
-                
+
             return text
-            
+
         except Exception as e:
             print(f"\n❌ Error en la transcripción local: {str(e)}")
-            if os.path.exists("audio.mp3"):
-                os.remove("audio.mp3")
-                print("Archivo de audio temporal eliminado después del error")
+            # Limpiar archivos temporales en caso de error
+            for temp_file in ["temp_audio", "audio.wav"]:
+                if os.path.exists(temp_file):
+                    os.remove(temp_file)
+                    print(f"Archivo temporal {temp_file} eliminado después del error")
             raise e

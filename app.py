@@ -52,16 +52,18 @@ def audio():
             tts_file = TTS().process(final_response)
             return {"result": "ok", "text": final_response, "file": tts_file}
         
-        elif function_name == "open_chrome":
-            PcCommand().open_chrome(args["website"])
-            final_response = "Listo, ya abrí chrome en el sitio " + args["website"]
+        elif function_name == "open_browser":
+            PcCommand().open_browser(args["website"])
+            final_response = "Listo, ya abrí el navegador en el sitio " + args["website"]
+            tts_file = TTS().process(final_response)
+            return {"result": "ok", "text": final_response, "file": tts_file}
+
+        elif function_name == "play_on_youtube":
+            PcCommand().play_on_youtube(args["song"])
+            final_response = "Listo, ya estoy reproduciendo '" + args["song"] + "' en YouTube para que suene la canción."
             tts_file = TTS().process(final_response)
             return {"result": "ok", "text": final_response, "file": tts_file}
         
-        elif function_name == "dominate_human_race":
-            final_response = "No te creas. Suscríbete al canal!"
-            tts_file = TTS().process(final_response)
-            return {"result": "ok", "text": final_response, "file": tts_file}
     else:
         final_response = "Disculpa, no he entendido bien tu solicitud. ¿Podrías repetirla de forma más clara y pausada? Estoy aquí para ayudarte con información del clima, enviar correos, abrir sitios web o asistirte en otras tareas."
         tts_file = TTS().process(final_response)
