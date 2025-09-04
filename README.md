@@ -1,56 +1,53 @@
+# Visualiza - Asistente Virtual
 
-# Asistente virtual
+Proyecto para un asistente virtual diseñado para personas ciegas.
 
-## Configuración
-Para ejecutar el proyecto es necesario:
-1. Descargar el repositorio
+## Instalación
 
-2. Configurar el entorno Python:
-   - Recomendado: Crear un ambiente virtual:
-     ```bash
-     python -m venv .venv
-     .venv\Scripts\activate  # En Windows
-     source .venv/bin/activate  # En Linux/Mac
-     ```
+1. Crear y activar un entorno virtual (opcional pero recomendado):
 
-3. Instalar herramientas base (importante para evitar errores):
-   ```bash
-   python -m pip install --upgrade pip
-   pip install wheel setuptools
-   ```
+```bash
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+venv\Scripts\activate     # Windows
+```
 
-4. Instalar las dependencias:
-   ```bash
-   pip install -r requirements.txt
-   ```
-   
-   Si encuentras errores con paquetes como `frozenlist`, `multidict`, `yarl` o `aiohttp`, instálalos individualmente:
-   ```bash
-   pip install frozenlist multidict yarl aiohttp
-   ```
-   
-5. Crear un archivo `.env` con las siguientes claves:
-   ```
-   NOVITA_API_KEY=XXXXXX      # API key de Novita AI
-   ELEVENLABS_API_KEY=XXXXXX  # API key de ElevenLabs para TTS
-   WEATHER_API_KEY=XXXXXX     # API key para el servicio del clima
-   ```
+2. Instalar dependencias:
 
-### Requisitos del Sistema
-- Python 3.8 o superior
-- En Windows: 
-  - Visual C++ 14.0 o superior (necesario para algunas dependencias)
-  - Puedes instalarlo con "Build Tools for Visual Studio"
-
+```bash
+pip install -r requirements.txt
+```
 
 ## Ejecución
-- Este proyecto utiliza Flask. Puedes levantar el servidor en modo debug por defecto en el puerto 5000 con el comando
-	- ```flask --app app run --debug```
-	- En tu navegador ve a http://localhost:5000
-	- Da clic para comenzar a grabar (pedirá permiso). Dar clic para dejar de grabar
 
+Para iniciar el servidor Flask:
 
-## Licencias
-- Imagen de micrófono por Freepik
-- Parte del código Este repositorio es el código para el video del Asistente Virtual en el canal Ringa Tech:
-https://youtu.be/-0tIy8wWtzE
+```bash
+python app.py
+```
+
+El servidor se ejecutará en `http://localhost:5000/`.
+
+## Manejo de errores
+
+- Asegúrate de tener las variables de entorno configuradas en un archivo `.env`.
+- Si el servidor no inicia, revisa que no haya otro proceso usando el puerto 5000.
+- Para problemas con dependencias, verifica que todas estén instaladas correctamente con la versión adecuada.
+- Los errores de grabación de audio pueden deberse a permisos del navegador o falta de HTTPS.
+
+## Dependencias
+
+Las dependencias principales están listadas en `requirements.txt`. Asegúrate de instalar todas antes de ejecutar la aplicación.
+
+## Testing
+
+- Se incluyen pruebas unitarias para servicios y rutas principales.
+- Ejecuta las pruebas con:
+
+```bash
+pytest
+```
+
+## Contacto
+
+Para soporte o preguntas, contacta al equipo de desarrollo.
